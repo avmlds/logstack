@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Compare{% endblock %}
+{% block body %}
+<div>
+  <input id="uuid1" placeholder="UUID1" value="{{ uuid1 }}">
+  <input id="uuid2" placeholder="UUID2" value="{{ uuid2 }}">
+  <input id="prefix" placeholder="Prefix" value="{{ prefix or '' }}">
+  <select id="orderBy">
+    <option value="improvements">Improvements</option>
+    <option value="degradations">Degradations</option>
+  </select>
+  <select id="descending">
+    <option value="true" selected>Descending</option>
+    <option value="false">Ascending</option>
+  </select>
+  <button onclick="loadCompare()">Compare</button>
+  <div class="pagination">
+  <button onclick="changePage(-1)">Prev</button>
+  <span id="pageInfo"></span>
+  <button onclick="changePage(1)">Next</button>
+</div>
+</div>
+<table>
+  <thead><tr>
+    <th>Prefix</th>
+    <th>Improvements</th>
+    <th>Degradations</th>
+  </tr></thead>
+  <tbody id="compareBody"></tbody>
+</table>
+<script>
+let page = 1;
+let pageSize = 20;
+
+async function loadCompare() {
+  const payload = {
+    upload_uuid_1: document.getElementById('uuid1').value,
+    upload_uuid_2: document.getElementById('uuid2').value,
+    prefix: document.getElementById('prefix').value,
+    page: page,
+    page_size: pageSize,
+    order_by: document.getElementById('orderBy').value,
+    descending: document.getElementById('descending').value === 'true'
+  };
+  const res = await fetch('/api/data/diffs', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const { result, total } = await res.json();
+  document.getElementById('compareBody').innerHTML = result.map(r => `
+    <tr>
+      <td>${r.prefix}</td>
+      <td>${r.improvements}</td>
+      <td>${r.degradations}</td>
+    </tr>`).join('');
+  document.getElementById('pageInfo').innerText = `Page ${page}, Records: ${total || result.length}`;
+}
+
+function changePage(delta) {
+  if (page + delta < 1) return;
+  page += delta;
+  loadCompare();
+}
+
+loadCompare();
+</script>
+{% endblock %}

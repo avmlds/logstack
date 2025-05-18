@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Stats Table{% endblock %}
+{% block body %}
+<div class="panel">
+  <input id="prefix" placeholder="Prefix">
+  <select id="order_by">
+    {% for col in ["count","mean","median","stddev","min","max"] %}
+      <option value="{{ col }}">{{ col }}</option>
+    {% endfor %}
+  </select>
+  <label><input type="checkbox" id="descending" checked> Desc</label>
+  <button onclick="loadStatsTable()">Refresh</button>
+  <div class="pagination">
+    <button onclick="changePage(-1)">Prev</button>
+    <span id="pageInfo"></span>
+    <button onclick="changePage(1)">Next</button>
+  </div>
+</div>
+<div class="panel">
+  <div id="statsMeta"></div>
+  <table id="statsTable">
+    <thead>
+      <tr>
+        <th>Prefix</th>
+        <th>Count</th>
+        <th>Mean</th>
+        <th>Median</th>
+        <th>Stddev</th>
+        <th>Min</th>
+        <th>Max</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+</div>
+<script>
+let page = 1;
+async function loadStatsTable() {
+  const payload = {
+    prefix: document.getElementById('prefix').value,
+    order_by: document.getElementById('order_by').value,
+    descending: document.getElementById('descending').checked,
+    page,
+    page_size: 10
+  };
+  const res = await fetch('/api/data/stats', {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+  });
+  const { result } = await res.json();
+  document.getElementById('pageInfo').innerText = `Page ${page}, Records: ${result.length}`;
+  const tbody = document.querySelector('#statsTable tbody');
+  tbody.innerHTML = '';
+  result.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.prefix}</td>
+      <td>${row.count}</td>
+      <td>${row.mean}</td>
+      <td>${row.median}</td>
+      <td>${row.stddev}</td>
+      <td>${row.min}</td>
+      <td>${row.max}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function changePage(diff) {
+  if (page + diff < 1) return;
+  page += diff;
+  loadStatsTable();
+}
+loadStatsTable();
+</script>
+{% endblock %}

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ "LogStack" }}</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #1e1e2f;
+      color: #e0e0e0;
+    }
+    header {
+      background: #2d2d40;
+      padding: 1rem;
+      border-bottom: 1px solid #444;
+    }
+    nav a {
+      color: #bbb;
+      margin-right: 1rem;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+      color: #fff;
+    }
+    main {
+      padding: 1rem;
+    }
+    .panel {
+      background: #2a2a3b;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 2rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    .chart-container {
+      width: 100%;
+      height: 80vh;
+    }
+    input, select, button {
+      margin-right: 0.5rem;
+      padding: 0.4rem;
+      border-radius: 4px;
+      border: none;
+    }
+    input, select {
+      background: #3a3a4f;
+      color: #eee;
+    }
+    button {
+      background: #4e8cff;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #3b6dcc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    th {
+      background-color: #3a3a4f;
+    }
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>{{ "LogStack" }}</h1>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/uploads">Uploads</a>
+      <a href="/stats">Stats</a>
+      <a href="/stats-table">Stats Table</a>
+      <a href="/trends">Trends</a>
+      <a href="/trends-table">Trends Table</a>
+      <a href="/compare">Compare</a>
+    </nav>
+  </header>
+  <main>
+    {% block body %}{% endblock %}
+  </main>
+</body>
+</html>

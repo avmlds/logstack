@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Uploads{% endblock %}
+{% block body %}
+<div>
+  <input id="prefixFilter" type="text" placeholder="Filter prefix" value="{{ prefix or '' }}">
+  <button onclick="fetchUploads()">Filter</button>
+  <div class="pagination">
+  <button onclick="changePage(-1)">Prev</button>
+  <span id="pageInfo"></span>
+  <button onclick="changePage(1)">Next</button>
+</div>
+</div>
+<table>
+  <thead><tr>
+    <th>ID</th><th>UUID</th><th>Name</th><th>Prefix</th><th>Errors</th><th>From–To</th><th>Created</th>
+  </tr></thead>
+  <tbody id="uploadsBody"></tbody>
+</table>
+<script>
+let page = 1;
+let pageSize = 20;
+
+async function fetchUploads() {
+  const prefix = document.getElementById('prefixFilter').value;
+  const response = await fetch('/api/data/uploads', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ prefix, page, page_size: pageSize })
+  });
+  const json = await response.json();
+  const tbody = document.getElementById('uploadsBody');
+  tbody.innerHTML = json.result.map(u => `
+    <tr>
+      <td>${u.id}</td>
+      <td>${u.upload_uuid}</td>
+      <td>${u.filename}</td>
+      <td>${u.prefix}</td>
+      <td>${u.error_count}</td>
+      <td>${u.from_date.substring(0,10)} – ${u.to_date.substring(0,10)}</td>
+      <td>${u.created_at.substring(0,10)}</td>
+    </tr>`).join('');
+  document.getElementById('pageInfo').innerText = `Page ${page}, Records: ${json.total || json.result.length}`;
+}
+
+function changePage(delta) {
+  if (page + delta < 1) return;
+  page += delta;
+  fetchUploads();
+}
+
+fetchUploads();
+</script>
+{% endblock %}

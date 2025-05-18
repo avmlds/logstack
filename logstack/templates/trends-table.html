@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Trends Table{% endblock %}
+{% block body %}
+<div class="panel">
+  <input id="prefix" placeholder="Prefix">
+  <label><input type="checkbox" id="descending" checked> Desc</label>
+  <button onclick="loadTrendsTable()">Refresh</button>
+  <div class="pagination">
+    <button onclick="changePage(-1)">Prev</button>
+    <span id="pageInfo"></span>
+    <button onclick="changePage(1)">Next</button>
+  </div>
+</div>
+<div class="panel">
+  <div id="trendsMeta"></div>
+  <table id="trendsTable">
+    <thead>
+      <tr>
+        <th>Path</th>
+        <th>Slope</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+</div>
+<script>
+let page = 1;
+async function loadTrendsTable() {
+  const payload = {
+    prefix: document.getElementById('prefix').value,
+    descending: document.getElementById('descending').checked,
+    page,
+    page_size: 10
+  };
+  const res = await fetch('/api/data/trends', {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+  });
+  const { result } = await res.json();
+  document.getElementById('pageInfo').innerText = `Page ${page}, Records: ${result.length}`;
+  const tbody = document.querySelector('#trendsTable tbody');
+  tbody.innerHTML = '';
+  result.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.prefix}</td>
+      <td>${row.slope}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function changePage(diff) {
+  if (page + diff < 1) return;
+  page += diff;
+  loadTrendsTable();
+}
+loadTrendsTable();
+</script>
+{% endblock %}
