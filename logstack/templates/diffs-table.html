@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Diffs Table{% endblock %}
+{% block body %}
+<div class="panel">
+  <input id="prefixFilter" type="text" placeholder="Filter prefix">
+  <input id="uuidInput" type="text" placeholder="UUIDs (comma separated)">
+  <select id="orderBy">
+    <option value="improvements">Improvements</option>
+    <option value="degradations">Degradations</option>
+  </select>
+  <select id="descending">
+    <option value="true" selected>Descending</option>
+    <option value="false">Ascending</option>
+  </select>
+  <button onclick="fetchDiffs()">Filter</button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Prefix</th>
+      <th>Improvements</th>
+      <th>Degradations</th>
+    </tr>
+  </thead>
+  <tbody id="diffsBody"></tbody>
+</table>
+
+<div class="pagination">
+  <button onclick="changePage(-1)">Prev</button>
+  <span id="pageInfo"></span>
+  <button onclick="changePage(1)">Next</button>
+</div>
+
+<script>
+let page = 1;
+let pageSize = 20;
+
+async function fetchDiffs() {
+  const prefix = document.getElementById('prefixFilter').value;
+  const uuids = document.getElementById('uuidInput').value
+    .split(',')
+    .map(u => u.trim())
+    .filter(Boolean);
+  const order_by = document.getElementById('orderBy').value;
+  const descending = document.getElementById('descending').value === 'true';
+
+  const payload = {
+    prefix,
+    upload_uuids: uuids.length ? uuids : null,
+    page,
+    page_size: pageSize,
+    order_by,
+    descending
+  };
+
+  const res = await fetch('/api/data/diffs', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+
+  const { result, total } = await res.json();
+  const tbody = document.getElementById('diffsBody');
+  tbody.innerHTML = result.map(r => `
+    <tr>
+      <td>${r.prefix}</td>
+      <td>${r.improvements}</td>
+      <td>${r.degradations}</td>
+    </tr>
+  `).join('');
+  document.getElementById('pageInfo').innerText = `Page ${page}, Records: ${total || result.length}`;
+}
+
+function changePage(delta) {
+  if (page + delta < 1) return;
+  page += delta;
+  fetchDiffs();
+}
+
+fetchDiffs();
+</script>
+{% endblock %}

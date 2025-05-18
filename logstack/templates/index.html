@@ -1,28 +1,53 @@
 {% extends "base.html" %}
-{% block title %}Upload File{% endblock %}
+{% block title %}Uploads{% endblock %}
 {% block body %}
-<form id="uploadForm" enctype="multipart/form-data">
-  <label>From date: <input type="date" name="from_date" required></label><br>
-  <label>To date:   <input type="date" name="to_date"   required></label><br>
-  <label>File:      <input type="file" name="file"       required></label><br>
-  <button type="button" onclick="uploadFile()">Upload</button>
-</form>
+<div>
+  <input id="prefixFilter" type="text" placeholder="Filter prefix" value="{{ prefix or '' }}">
+  <button onclick="fetchUploads()">Filter</button>
+  <div class="pagination">
+  <button onclick="changePage(-1)">Prev</button>
+  <span id="pageInfo"></span>
+  <button onclick="changePage(1)">Next</button>
+</div>
+</div>
+<table>
+  <thead><tr>
+    <th>ID</th><th>UUID</th><th>Name</th><th>Prefix</th><th>Errors</th><th>From–To</th><th>Created</th>
+  </tr></thead>
+  <tbody id="uploadsBody"></tbody>
+</table>
 <script>
-async function uploadFile() {
-  const form = document.getElementById('uploadForm');
-  const data = new FormData(form);
-  const params = new URLSearchParams({
-    from_date: data.get('from_date'),
-    to_date: data.get('to_date')
-  });
-  data.delete('from_date');
-  data.delete('to_date');
-  const response = await fetch(`/api/files/upload?${params}`, {
+let page = 1;
+let pageSize = 20;
+
+async function fetchUploads() {
+  const prefix = document.getElementById('prefixFilter').value;
+  const response = await fetch('/api/data/uploads', {
     method: 'POST',
-    body: data
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ prefix, page, page_size: pageSize })
   });
-  if (response.ok) window.location.href = '/uploads';
-  else alert('Upload failed');
+  const json = await response.json();
+  const tbody = document.getElementById('uploadsBody');
+  tbody.innerHTML = json.result.map(u => `
+    <tr>
+      <td>${u.id}</td>
+      <td>${u.upload_uuid}</td>
+      <td>${u.filename}</td>
+      <td>${u.prefix}</td>
+      <td>${u.error_count}</td>
+      <td>${u.from_date.substring(0,10)} – ${u.to_date.substring(0,10)}</td>
+      <td>${u.created_at.substring(0,10)}</td>
+    </tr>`).join('');
+  document.getElementById('pageInfo').innerText = `Page ${page}, Records: ${json.total || json.result.length}`;
 }
+
+function changePage(delta) {
+  if (page + delta < 1) return;
+  page += delta;
+  fetchUploads();
+}
+
+fetchUploads();
 </script>
 {% endblock %}

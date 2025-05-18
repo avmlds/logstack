@@ -58,25 +58,24 @@ def get_upload_diffs(
     )
     diff_expr = (Flamechart.error_count - prev_ec).label("diff")
 
-    subq = session.query(
+    inner_query = session.query(
         Flamechart.prefix,
         Flamechart.created_at.label("upload_time"),
         Flamechart.upload_uuid,
-        Flamechart.prefix,
         diff_expr,
-    ).subquery()
+    )
+
+    if prefix:
+        # apply prefix filter on prefix in subquery
+        p = prefix.rstrip("/")
+        inner_query = inner_query.filter(Flamechart.prefix.like(f"{p}%"))
+    subq = inner_query.subquery()
 
     # 2) Outer query: aggregate improvements/degradations
     improvements = func.sum(case((subq.c.diff < 0, 1), else_=0)).label("improvements")
     degradations = func.sum(case((subq.c.diff > 0, 1), else_=0)).label("degradations")
 
     q = session.query(subq.c.prefix, improvements, degradations)
-
-    if prefix:
-        # apply prefix filter on prefix in subquery
-        q = q.join(subq, Flamechart.prefix == subq.c.prefix)
-        q = _apply_prefix_filter(q, prefix)
-
     if include_upload_uuids:
         q = q.filter(subq.c.upload_uuid.in_(include_upload_uuids))
 

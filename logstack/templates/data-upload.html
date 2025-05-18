@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Upload File{% endblock %}
+{% block body %}
+<form id="uploadForm" enctype="multipart/form-data">
+  <label>From date: <input type="date" name="from_date" required></label><br>
+  <label>To date:   <input type="date" name="to_date"   required></label><br>
+  <label>File:      <input type="file" name="file"       required></label><br>
+  <button type="button" onclick="uploadFile()">Upload</button>
+</form>
+<script>
+async function uploadFile() {
+  const form = document.getElementById('uploadForm');
+  const data = new FormData(form);
+  const params = new URLSearchParams({
+    from_date: data.get('from_date'),
+    to_date: data.get('to_date')
+  });
+  data.delete('from_date');
+  data.delete('to_date');
+  const response = await fetch(`/api/files/upload?${params}`, {
+    method: 'POST',
+    body: data
+  });
+  if (response.ok) window.location.href = '/';
+  else alert('Upload failed');
+}
+</script>
+{% endblock %}

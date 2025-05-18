@@ -32,23 +32,41 @@ def upgrade():
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
-        op.f("ix_flamechart_created_at"), "flamechart", ["created_at"], unique=False,
+        op.f("ix_flamechart_created_at"),
+        "flamechart",
+        ["created_at"],
+        unique=False,
     )
     op.create_index(
-        op.f("ix_flamechart_filename"), "flamechart", ["filename"], unique=False,
+        op.f("ix_flamechart_filename"),
+        "flamechart",
+        ["filename"],
+        unique=False,
     )
     op.create_index(
-        op.f("ix_flamechart_from_date"), "flamechart", ["from_date"], unique=False,
+        op.f("ix_flamechart_from_date"),
+        "flamechart",
+        ["from_date"],
+        unique=False,
     )
     op.create_index(op.f("ix_flamechart_id"), "flamechart", ["id"], unique=False)
     op.create_index(
-        op.f("ix_flamechart_prefix"), "flamechart", ["prefix"], unique=False,
+        op.f("ix_flamechart_prefix"),
+        "flamechart",
+        ["prefix"],
+        unique=False,
     )
     op.create_index(
-        op.f("ix_flamechart_to_date"), "flamechart", ["to_date"], unique=False,
+        op.f("ix_flamechart_to_date"),
+        "flamechart",
+        ["to_date"],
+        unique=False,
     )
     op.create_index(
-        op.f("ix_flamechart_upload_uuid"), "flamechart", ["upload_uuid"], unique=False,
+        op.f("ix_flamechart_upload_uuid"),
+        "flamechart",
+        ["upload_uuid"],
+        unique=False,
     )
     # ### end Alembic commands ###
 

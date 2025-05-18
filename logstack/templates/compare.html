@@ -5,14 +5,6 @@
   <input id="uuid1" placeholder="UUID1" value="{{ uuid1 }}">
   <input id="uuid2" placeholder="UUID2" value="{{ uuid2 }}">
   <input id="prefix" placeholder="Prefix" value="{{ prefix or '' }}">
-  <select id="orderBy">
-    <option value="improvements">Improvements</option>
-    <option value="degradations">Degradations</option>
-  </select>
-  <select id="descending">
-    <option value="true" selected>Descending</option>
-    <option value="false">Ascending</option>
-  </select>
   <button onclick="loadCompare()">Compare</button>
   <div class="pagination">
   <button onclick="changePage(-1)">Prev</button>
@@ -23,8 +15,9 @@
 <table>
   <thead><tr>
     <th>Prefix</th>
-    <th>Improvements</th>
-    <th>Degradations</th>
+    <th>Error Count UUID 1</th>
+    <th>Error Count UUID 2</th>
+    <th>Delta</th>
   </tr></thead>
   <tbody id="compareBody"></tbody>
 </table>
@@ -39,10 +32,8 @@ async function loadCompare() {
     prefix: document.getElementById('prefix').value,
     page: page,
     page_size: pageSize,
-    order_by: document.getElementById('orderBy').value,
-    descending: document.getElementById('descending').value === 'true'
   };
-  const res = await fetch('/api/data/diffs', {
+  const res = await fetch('/api/data/compare', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify(payload)
@@ -51,8 +42,9 @@ async function loadCompare() {
   document.getElementById('compareBody').innerHTML = result.map(r => `
     <tr>
       <td>${r.prefix}</td>
-      <td>${r.improvements}</td>
-      <td>${r.degradations}</td>
+      <td>${r.error_count_1}</td>
+      <td>${r.error_count_2}</td>
+      <td>${r.delta}</td>
     </tr>`).join('');
   document.getElementById('pageInfo').innerText = `Page ${page}, Records: ${total || result.length}`;
 }
