@@ -1,0 +1,12 @@
+<div style="position: relative; display: inline-block; width: 50%;">
+    <input
+      id="prefix"
+      placeholder="Prefix"
+      value="{{ prefix or '/' }}"
+      style="width: 100%;"
+      onfocus="fetchSuggestions()"
+      oninput="debouncedFetchSuggestions()"
+      onblur="hideSuggestionsLater()"
+    />
+    <ul id="suggestions" style="position: absolute; background: #2a2a3b; border: 1px solid #444; width: 100%; list-style: none; margin: 0; padding: 0; display: none; z-index: 10;"></ul>
+</div>

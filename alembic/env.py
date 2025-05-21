@@ -6,6 +6,9 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
+from logstack.database import get_url
+from logstack.database_models import Base
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # this is the Alembic Config object, which provides
@@ -15,9 +18,6 @@ config = context.config
 # Interpret the settings file for Python logging.
 # This line sets up loggers basically.
 fileConfig(config.config_file_name)
-
-from logstack.database import get_url
-from logstack.database_models import Base
 
 target_metadata = Base.metadata
 

@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from logstack.api_models import (
@@ -15,6 +15,8 @@ from logstack.api_models import (
     TrendsRequest,
     TrendsResponse,
     UploadsModel,
+    AllUploadsRequest,
+    TrendsChartResponse,
 )
 from logstack.controllers import (
     compare_uploads,
@@ -22,10 +24,22 @@ from logstack.controllers import (
     get_basic_stats,
     get_upload_diffs,
     list_upload_times,
+    get_all_uploads,
+    compute_trend_chart,
+    get_prefix_autocomplete,
 )
 from logstack.database import get_db
 
 comparison_router = APIRouter(prefix="/data")
+
+
+@comparison_router.post("/uploads_all")
+def uploads_all(req: AllUploadsRequest, db: Session = Depends(get_db)):
+    return {
+        "result": get_all_uploads(
+            db, req.page, req.page_size, req.order_by, req.descending
+        )
+    }
 
 
 @comparison_router.post("/uploads", response_model=GenericResponse[UploadsModel])
@@ -57,6 +71,18 @@ def api_trends(req: TrendsRequest = Body(...), db: Session = Depends(get_db)):
             req.page,
             req.page_size,
             req.descending,
+        ),
+    }
+
+
+@comparison_router.post(
+    "/trends-chart", response_model=GenericResponse[TrendsChartResponse]
+)
+def api_trend_chart(req: TrendsRequest = Body(...), db: Session = Depends(get_db)):
+    return {
+        "result": compute_trend_chart(
+            db,
+            req.prefix,
         ),
     }
 
@@ -93,3 +119,13 @@ def api_compare(req: CompareRequest = Body(...), db: Session = Depends(get_db)):
             req.page_size,
         ),
     }
+
+
+@comparison_router.get("/prefix-autocomplete", response_model=GenericResponse[str])
+def get_prefix_suggestions(
+    prefix: str = Query("/", description="Current prefix"),
+    db: Session = Depends(get_db),
+):
+    """Return next-level prefix segments under the given prefix."""
+
+    return {"result": get_prefix_autocomplete(db, prefix)}

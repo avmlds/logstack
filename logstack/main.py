@@ -6,21 +6,23 @@ from fastapi.templating import Jinja2Templates
 
 from logstack.comparison_api import comparison_router
 from logstack.file_management_api import file_router
+from fastapi.staticfiles import StaticFiles
 
 templates = Jinja2Templates("templates")
 
 app = FastAPI()
 app.include_router(file_router, prefix="/api")
 app.include_router(comparison_router, prefix="/api")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/")
-async def index(request: Request):
+async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/{template}")
-async def index(template: str, request: Request):
+async def template_index(template: str, request: Request):
     if not template:
         template = "index"
     if "favicon" in template:

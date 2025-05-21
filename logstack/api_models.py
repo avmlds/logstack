@@ -10,6 +10,15 @@ class GenericResponse(BaseModel, Generic[T]):
     result: list[T]
 
 
+class AllUploadsRequest(BaseModel):
+    page: int = Field(1, ge=1)
+    page_size: int = Field(1000, ge=1, le=1000)
+    order_by: Literal["upload_uuid", "filename", "created_at", "errors_total"] = (
+        "created_at"
+    )
+    descending: bool = True
+
+
 class PrefixRequest(BaseModel):
     prefix: str | None = Field(None, description="prefix prefix filter")
     page: int = Field(1, ge=1)
@@ -38,6 +47,14 @@ class TrendsRequest(PrefixRequest):
 class TrendsResponse(BaseModel):
     prefix: str
     slope: float
+    intercept: float
+
+
+class TrendsChartResponse(BaseModel):
+    upload_uuid: str
+    to_date: datetime
+    error_count: int
+    predict: float
 
 
 class StatsRequest(PrefixRequest):

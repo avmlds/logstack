@@ -1,12 +1,77 @@
 {% extends "base.html" %}
 {% block title %}Upload File{% endblock %}
 {% block body %}
-<form id="uploadForm" enctype="multipart/form-data">
-  <label>From date: <input type="date" name="from_date" required></label><br>
-  <label>To date:   <input type="date" name="to_date"   required></label><br>
-  <label>File:      <input type="file" name="file"       required></label><br>
-  <button type="button" onclick="uploadFile()">Upload</button>
-</form>
+<style>
+.form-wrapper {
+  display: flex;
+  justify-content: left;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+#uploadForm {
+  background: #2a2a3b;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 300px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  color: #ccc;
+  margin-bottom: 0.3rem;
+}
+
+input[type="date"],
+input[type="file"] {
+  background: #3a3a4f;
+  color: #eee;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+button {
+  padding: 0.5rem;
+  background: #4e8cff;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #3b6dcc;
+}
+
+</style>
+<div class="form-wrapper">
+  <form id="uploadForm" enctype="multipart/form-data">
+    <div class="form-group">
+      <label>From date:</label>
+      <input type="date" name="from_date" required>
+    </div>
+    <div class="form-group">
+      <label>To date:</label>
+      <input type="date" name="to_date" required>
+    </div>
+    <div class="form-group">
+      <label>File:</label>
+      <input type="file" name="file" required>
+    </div>
+    <div class="form-group">
+      <button type="button" onclick="uploadFile()">Upload</button>
+    </div>
+  </form>
+</div>
 <script>
 async function uploadFile() {
   const form = document.getElementById('uploadForm');

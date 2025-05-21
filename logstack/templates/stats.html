@@ -2,7 +2,7 @@
 {% block title %}Stats{% endblock %}
 {% block body %}
 <div class="panel">
-  <input id="prefix" placeholder="Prefix" value="{{ prefix or '' }}">
+  {% include "prefix-search.html" with context %}
   <select id="order_by">
     {% for col in ["count","mean","median","stddev","min","max"] %}
       <option value="{{ col }}" {% if order_by==col %}selected{% endif %}>{{ col }}</option>

@@ -1,16 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Compare{% endblock %}
 {% block body %}
-<div>
-  <input id="uuid1" placeholder="UUID1" value="{{ uuid1 }}">
-  <input id="uuid2" placeholder="UUID2" value="{{ uuid2 }}">
-  <input id="prefix" placeholder="Prefix" value="{{ prefix or '' }}">
-  <button onclick="loadCompare()">Compare</button>
+<div class="panel">
+  {% include "prefix-search.html" with context %}
+  <div style="position: relative; display: inline-block;">
+    <input id="uuid1" placeholder="UUID1" value="{{ uuid1 }}">
+    <input id="uuid2" placeholder="UUID2" value="{{ uuid2 }}">
+    <button onclick="loadCompare()">Compare</button>
+  </div>
   <div class="pagination">
-  <button onclick="changePage(-1)">Prev</button>
-  <span id="pageInfo"></span>
-  <button onclick="changePage(1)">Next</button>
-</div>
+    <button onclick="changePage(-1)">Prev</button>
+    <span id="pageInfo"></span>
+    <button onclick="changePage(1)">Next</button>
+  </div>
 </div>
 <table>
   <thead><tr>

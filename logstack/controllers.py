@@ -39,6 +39,49 @@ def list_upload_times(session, prefix: str = None, page: int = 1, page_size: int
     ]
 
 
+def get_all_uploads(
+    session,
+    page: int = 1,
+    page_size: int = 50,
+    order_by: Literal[
+        "upload_uuid", "filename", "created_at", "errors_total"
+    ] = "created_at",
+    descending: bool = True,
+):
+    order_by_map = {
+        "upload_uuid": Flamechart.upload_uuid,
+        "filename": Flamechart.filename,
+        "created_at": Flamechart.created_at,
+        "errors_total": func.sum(Flamechart.error_count).label("errors_total"),
+    }
+    order_by_column = order_by_map[order_by]
+
+    query = (
+        session.query(
+            Flamechart.upload_uuid,
+            Flamechart.filename,
+            Flamechart.created_at,
+            func.sum(Flamechart.error_count).label("errors_total"),
+        )
+        .group_by(
+            Flamechart.upload_uuid,
+            Flamechart.filename,
+            Flamechart.created_at,
+        )
+        .order_by(order_by_column.desc() if descending else order_by_column.asc())
+    )
+    offset = (page - 1) * page_size
+    return [
+        {
+            "upload_uuid": row.upload_uuid,
+            "filename": row.filename,
+            "created_at": row.created_at,
+            "errors_total": row.errors_total,
+        }
+        for row in query.offset(offset).limit(page_size).all()
+    ]
+
+
 def get_upload_diffs(
     session,
     prefix: str = None,
@@ -92,6 +135,56 @@ def get_upload_diffs(
     return sorted(result, key=lambda row: row[order_by], reverse=descending)
 
 
+def calculate_trends(
+    rows: list[Flamechart], group_by: str, sorting_key: str
+) -> list[tuple[str, float]]:
+    trends = []
+    for group_by_key, group in groupby(rows, key=lambda r: getattr(r, group_by)):
+        recs = sorted(group, key=lambda row: getattr(row, sorting_key))
+        if len(recs) < 2:
+            trends.append((group_by_key, (1, 0)))
+            continue
+
+        x_values = np.array([i for i in range(len(recs))])
+        errors = np.array([r.error_count for r in recs])
+        k, b = np.polyfit(x_values, errors, 1)
+        trends.append((group_by_key, (k, b)))
+
+    return trends
+
+
+def compute_trend_chart(session, prefix: str = "/"):
+    prefix_len = len(prefix)
+    grouped_prefix = func.substr(Flamechart.prefix, 1, prefix_len).label(
+        "grouped_prefix"
+    )
+    q = (
+        session.query(
+            Flamechart.upload_uuid,
+            grouped_prefix,
+            Flamechart.to_date,
+            func.sum(Flamechart.error_count).label("error_count"),
+        )
+        .filter(Flamechart.prefix.startswith(prefix))
+        .group_by(Flamechart.upload_uuid, grouped_prefix, Flamechart.to_date)
+        .order_by(Flamechart.to_date.asc())
+    )
+    rows = q.all()
+    trends = dict(
+        calculate_trends(rows, group_by="grouped_prefix", sorting_key="to_date")
+    )
+    slope, intercept = trends.get(prefix, (1, 0))
+    return [
+        {
+            "upload_uuid": str(row.upload_uuid),
+            "to_date": row.to_date,
+            "error_count": row.error_count,
+            "predict": slope * n + intercept,
+        }
+        for n, row in enumerate(rows)
+    ]
+
+
 def compute_trends(
     session,
     prefix: str = None,
@@ -113,21 +206,8 @@ def compute_trends(
         q = q.filter(Flamechart.prefix.startswith(prefix))
     rows = q.all()
 
-    trends = []
-    for prefix, group in groupby(rows, key=lambda r: r.prefix):
-        recs = list(group)
-        if len(recs) < 2:
-            continue
-        base = recs[0].created_at
-        times = np.array(
-            [(r.created_at - base).total_seconds() / 86400.0 for r in recs],
-        )
-        errors = np.array([r.error_count for r in recs])
-        slope, _ = np.polyfit(times, errors, 1)
-        trends.append((prefix, round(slope, 3)))
-
-    # sort by slope
-    trends.sort(key=lambda x: x[1], reverse=descending)
+    trends = calculate_trends(rows, "prefix", "created_at")
+    trends.sort(key=lambda x: x[0], reverse=descending)
 
     # apply pagination
     start = (page - 1) * page_size
@@ -135,7 +215,8 @@ def compute_trends(
     return [
         {
             "prefix": trend[0],
-            "slope": trend[1],
+            "slope": trend[1][0],
+            "intercept": trend[1][1],
         }
         for trend in trends[start:end]
     ]
@@ -150,7 +231,7 @@ def get_basic_stats(
     page_size: int = 50,
 ):
     # 1) Define each aggregate and label it
-    runs_col = func.count(Flamechart.error_count).label("runs")
+    sum_column = func.sum(Flamechart.error_count).label("count")
     mean_col = func.avg(Flamechart.error_count).label("mean")
     median_col = (
         func.percentile_cont(0.5).within_group(Flamechart.error_count).label("median")
@@ -162,7 +243,7 @@ def get_basic_stats(
     # 2) Build the base query
     q = session.query(
         Flamechart.prefix,
-        runs_col,
+        sum_column,
         mean_col,
         median_col,
         std_col,
@@ -177,7 +258,7 @@ def get_basic_stats(
 
     # 4) Map the user’s order_by key to the actual column
     ordering_map = {
-        "count": runs_col,
+        "count": sum_column,
         "mean": mean_col,
         "median": median_col,
         "stddev": std_col,
@@ -249,3 +330,25 @@ def compare_uploads(
         }
         for row in q.offset(offset).limit(page_size).all()
     ]
+
+
+def get_prefix_autocomplete(session, prefix: str) -> list[str]:
+    like_pattern = f"{prefix.rstrip('/')}%"
+    query = session.query(Flamechart.prefix).filter(
+        Flamechart.prefix.like(like_pattern)
+    )
+
+    next_segments = set()
+    for row in query.limit(1000):
+        remaining = row.prefix[len(prefix) :]
+        if not remaining:
+            continue
+
+        split_remaining = remaining.split("/")
+        if len(split_remaining) == 1:
+            segment = split_remaining[0]
+        else:
+            segment = split_remaining[0] + "/"
+
+        next_segments.add(segment)
+    return sorted(next_segments)

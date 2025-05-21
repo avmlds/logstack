@@ -1,10 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Trends Table{% endblock %}
+{% block title %}Stats Table{% endblock %}
 {% block body %}
 <div class="panel">
-  {% include "prefix-search.html" with context %}
+  <select id="order_by">
+    {% for col in ["upload_uuid","filename","created_at","errors_total"] %}
+      <option value="{{ col }}">{{ col }}</option>
+    {% endfor %}
+  </select>
   <label><input type="checkbox" id="descending" checked> Desc</label>
-  <button onclick="loadTrendsTable()">Refresh</button>
+  <button onclick="loadStatsTable()">Refresh</button>
   <div class="pagination">
     <button onclick="changePage(-1)">Prev</button>
     <span id="pageInfo"></span>
@@ -12,13 +16,14 @@
   </div>
 </div>
 <div class="panel">
-  <div id="trendsMeta"></div>
-  <table id="trendsTable">
+  <div id="statsMeta"></div>
+  <table id="allUploads">
     <thead>
       <tr>
-        <th>Path</th>
-        <th>Slope</th>
-        <th>Intercept</th>
+        <th>Upload UUID</th>
+        <th>Filename</th>
+        <th>Created At</th>
+        <th>Total errors</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -27,34 +32,35 @@
 </div>
 <script>
 let page = 1;
-async function loadTrendsTable() {
+async function loadStatsTable() {
   const payload = {
-    prefix: document.getElementById('prefix').value,
     descending: document.getElementById('descending').checked,
     page,
-    page_size: 10
+    page_size: 10,
+    order_by: document.getElementById('order_by').value,
   };
-  const res = await fetch('/api/data/trends', {
+  const res = await fetch('/api/data/uploads_all', {
     method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
   });
   const { result } = await res.json();
   document.getElementById('pageInfo').innerText = `Page ${page}, Records: ${result.length}`;
-  const tbody = document.querySelector('#trendsTable tbody');
+  const tbody = document.querySelector('#allUploads tbody');
   tbody.innerHTML = '';
   result.forEach(row => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${row.prefix}</td>
-      <td>${row.slope}</td>
-      <td>${row.intercept}</td>`;
+      <td>${row.upload_uuid}</td>
+      <td>${row.filename}</td>
+      <td>${row.created_at}</td>
+      <td>${row.errors_total}</td>`
     tbody.appendChild(tr);
   });
 }
 function changePage(diff) {
   if (page + diff < 1) return;
   page += diff;
-  loadTrendsTable();
+  loadStatsTable();
 }
-loadTrendsTable();
+loadStatsTable();
 </script>
 {% endblock %}

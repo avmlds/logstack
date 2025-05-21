@@ -2,38 +2,42 @@
 {% block title %}Trends{% endblock %}
 {% block body %}
 <div class="panel">
-  <input id="prefix" placeholder="Prefix" value="{{ prefix or '' }}">
+  {% include "prefix-search.html" with context %}
   <label><input type="checkbox" id="descending" {% if descending %}checked{% endif %}> Desc</label>
-  <button onclick="loadTrends()">Refresh</button>
+  <button onclick="loadTrends()" style="margin-left: 10px;">Refresh</button>
 </div>
 <div class="panel chart-container" id="trendsChart"></div>
 
 <script>
 let trendsChartInstance;
+
 async function loadTrends() {
   const payload = {
     prefix: document.getElementById('prefix').value,
     descending: document.getElementById('descending').checked
   };
-  const res = await fetch('/api/data/trends', {
+  const res = await fetch('/api/data/trends-chart', {
     method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
   });
   const { result } = await res.json();
-  const labels = result.map(r => r.prefix);
-  const slopes = result.map(r => r.slope);
+  const x_labels = result.map(r => r.to_date);
+  const error_counts = result.map(r => r.error_count);
+  const slopes = result.map(r => r.predict);
 
   if (!trendsChartInstance) {
     trendsChartInstance = echarts.init(document.getElementById('trendsChart'));
   }
   trendsChartInstance.setOption({
     tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', data: labels, axisLabel: { color: '#aaa', rotate: 60 }},
+    xAxis: { type: 'category', data: x_labels, axisLabel: { color: '#aaa', rotate: 60 }},
     yAxis: { type: 'value', axisLabel: { color: '#aaa' }},
     series: [
-      { name: 'Slope', type: 'line', data: slopes, smooth: true, lineStyle: { width: 3 } }
+      { name: 'Data', type: 'line', data: error_counts, smooth: false, lineStyle: { width: 3 } },
+      { name: 'Predict', type: 'line', data: slopes, smooth: true, lineStyle: { width: 3 } }
     ]
   });
 }
+
 loadTrends();
 </script>
 {% endblock %}

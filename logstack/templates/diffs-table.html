@@ -2,7 +2,7 @@
 {% block title %}Diffs Table{% endblock %}
 {% block body %}
 <div class="panel">
-  <input id="prefixFilter" type="text" placeholder="Filter prefix">
+  {% include "prefix-search.html" with context %}
   <input id="uuidInput" type="text" placeholder="UUIDs (comma separated)">
   <select id="orderBy">
     <option value="improvements">Improvements</option>
@@ -37,7 +37,7 @@ let page = 1;
 let pageSize = 20;
 
 async function fetchDiffs() {
-  const prefix = document.getElementById('prefixFilter').value;
+  const prefix = document.getElementById('prefix').value;
   const uuids = document.getElementById('uuidInput').value
     .split(',')
     .map(u => u.trim())

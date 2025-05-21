@@ -27,6 +27,9 @@
       text-decoration: underline;
       color: #fff;
     }
+    nav a.active {
+      border-bottom: 2px solid #4e8cff;
+    }
     main {
       padding: 1rem;
     }
@@ -84,18 +87,20 @@
   <header>
     <h1>{{ "LogStack" }}</h1>
     <nav>
-      <a href="/">Home</a>
-      <a href="/data-upload">Data upload</a>
-      <a href="/stats">Stats</a>
-      <a href="/stats-table">Stats Table</a>
-      <a href="/trends">Trends</a>
-      <a href="/trends-table">Trends Table</a>
-      <a href="/compare">Compare</a>
-      <a href="/diffs-table">Diffs Table</a>
+      <a href="/" class="{{ 'active' if request.url.path == '/' else '' }}">Home</a>
+      <a href="/all-uploads" class="{{ 'active' if request.url.path.startswith('/all-uploads') else '' }}">Uploads</a>
+      <a href="/data-upload" class="{{ 'active' if request.url.path.startswith('/data-upload') else '' }}">Data upload</a>
+      <a href="/stats" class="{{ 'active' if request.url.path.startswith('/stats') and not request.url.path.startswith('/stats-table') else '' }}">Stats</a>
+      <a href="/stats-table" class="{{ 'active' if request.url.path.startswith('/stats-table') else '' }}">Stats Table</a>
+      <a href="/trends" class="{{ 'active' if request.url.path.startswith('/trends') and not request.url.path.startswith('/trends-table') else '' }}">Trends</a>
+      <a href="/trends-table" class="{{ 'active' if request.url.path.startswith('/trends-table') else '' }}">Trends Table</a>
+      <a href="/compare" class="{{ 'active' if request.url.path.startswith('/compare') else '' }}">Compare</a>
+      <a href="/diffs-table" class="{{ 'active' if request.url.path.startswith('/diffs-table') else '' }}">Diffs Table</a>
     </nav>
   </header>
   <main>
     {% block body %}{% endblock %}
   </main>
+<script src="{{ url_for('static', path='js/shared.js') }}"></script>
 </body>
 </html>

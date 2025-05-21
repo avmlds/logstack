@@ -2,7 +2,7 @@
 {% block title %}Uploads{% endblock %}
 {% block body %}
 <div>
-  <input id="prefixFilter" type="text" placeholder="Filter prefix" value="{{ prefix or '' }}">
+  {% include "prefix-search.html" with context %}
   <button onclick="fetchUploads()">Filter</button>
   <div class="pagination">
   <button onclick="changePage(-1)">Prev</button>
@@ -21,7 +21,7 @@ let page = 1;
 let pageSize = 20;
 
 async function fetchUploads() {
-  const prefix = document.getElementById('prefixFilter').value;
+  const prefix = document.getElementById('prefix').value;
   const response = await fetch('/api/data/uploads', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
