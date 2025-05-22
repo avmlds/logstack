@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from logstack.api.models import (
     AllUploadsRequest,
     BasePrefixRequest,
+    BasicStatsChartResponse,
     BasicStatsModel,
     CompareRequest,
     CompareResponse,
@@ -108,7 +109,10 @@ def api_stats(req: StatsRequest = Body(...), db: Session = Depends(get_db)):
     }
 
 
-@comparison_router.post("/stats-chart", response_model=GenericResponse[BasicStatsModel])
+@comparison_router.post(
+    "/stats-chart",
+    response_model=GenericResponse[BasicStatsChartResponse],
+)
 def api_stats_chart(req: BasePrefixRequest = Body(...), db: Session = Depends(get_db)):
     return {
         "result": get_basic_stats_chart(db, req.prefix),

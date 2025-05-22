@@ -22,52 +22,78 @@ async function loadStats() {
     order_by: document.getElementById('order_by').value,
     descending: document.getElementById('descending').checked
   };
-  const res = await fetch('/api/data/stats', {
-    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+  const res = await fetch('/api/data/stats-chart', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
   });
+
   const { result } = await res.json();
-  const labels = result.map(r => r.prefix);
+
+  const x_labels = result.map(r => {
+    const date = new Date(r.to_date);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  });
+
   const dataMean = result.map(r => r.mean);
   const dataMedian = result.map(r => r.median);
-  const dataCount = result.map(r => r.count);
-  const dataStddev = result.map(r => r.stddev);
   const dataMin = result.map(r => r.min);
-  const dataMax = result.map(r => r.max);
+  const dataMax = result.map((r, i) => r.max - result[i].min);
+
   if (!statsChartInstance) {
     statsChartInstance = echarts.init(document.getElementById('statsChart'));
   }
+
   statsChartInstance.setOption({
-    tooltip: { trigger: 'axis' },
-    legend: { data: ['Count', 'Mean', 'Median', 'Stddev', 'Min', 'Max'], textStyle: { color: '#ccc' } },
-    xAxis: { type: 'category', data: labels, axisLabel: { color: '#aaa' }},
+    tooltip: {
+      trigger: 'axis',
+      formatter: function (params) {
+        let min = params.find(p => p.seriesName === 'Min')?.data ?? 0;
+        let diff = params.find(p => p.seriesName === 'Range')?.data ?? 0;
+        let max = min + diff;
+        return `${params[0].axisValue}<br/>
+          Min: ${min}<br/>
+          Max: ${max}<br/>
+          Mean: ${params.find(p => p.seriesName === 'Mean')?.data}<br/>
+          Median: ${params.find(p => p.seriesName === 'Median')?.data}<br/>`
+      }
+    },
+    legend: {
+      data: ['Mean', 'Median'],
+      textStyle: { color: '#ccc' }
+    },
+    xAxis: {
+      type: 'category',
+      data: x_labels,
+      axisLabel: { color: '#aaa' }
+    },
     yAxis: [
-      { type: 'value', name: 'Stats', axisLabel: { color: '#aaa' }},
-      { type: 'value', name: 'Count', axisLabel: { color: '#aaa' }, position: 'right' }
+      { type: 'value', name: 'Stats', axisLabel: { color: '#aaa' } },
     ],
     series: [
-      { name: 'Count', type: 'line', data: dataCount, yAxisIndex: 1 },
       { name: 'Mean', type: 'line', data: dataMean },
       { name: 'Median', type: 'line', data: dataMedian },
-      { name: 'Stddev', type: 'line', data: dataStddev },
-       {
-          name: 'Min',
-          type: 'line',
-          data: dataMin,
-          lineStyle: { opacity: 0 },
-          stack: 'range',
-          areaStyle: {
-            opacity: 0
-          }
+      {
+        name: 'Min',
+        type: 'line',
+        data: dataMin,
+        stack: 'range',
+        lineStyle: { opacity: 0 },
+        areaStyle: { opacity: 0 }
+      },
+      {
+        name: 'Range',
+        type: 'line',
+        data: dataMax, // this is max - min
+        stack: 'range',
+        areaStyle: {
+          color: 'rgba(0, 136, 212, 0.3)'
         },
-        {
-          name: 'Max',
-          type: 'line',
-          data: dataMax,
-          stack: 'range',
-          areaStyle: {
-            color: 'rgba(0, 136, 212, 0.3)'
-          }
-        }
+        lineStyle: { opacity: 0 }
+      }
     ]
   });
 }

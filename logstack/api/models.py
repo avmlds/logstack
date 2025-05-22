@@ -101,6 +101,14 @@ class BasicStatsModel(BaseModel):
     max: float
 
 
+class BasicStatsChartResponse(BaseModel):
+    to_date: datetime
+    mean: float
+    median: float
+    min: float
+    max: float
+
+
 class EventRequestModel(BaseModel):
     prefix: str
     error_count: int = 1

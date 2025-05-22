@@ -16,7 +16,10 @@ def _apply_prefix_filter(query, prefix):
 
 
 def list_upload_times(
-    session, prefix: str | None = None, page: int = 1, page_size: int = 50
+    session,
+    prefix: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
 ):
     """List distinct upload timestamps (created_at), optionally filtered by prefix prefix,
     with pagination.
@@ -298,12 +301,10 @@ def get_basic_stats_chart(
     prefix: str | None = None,
 ):
     # 1) Define each aggregate and label it
-    sum_column = func.sum(Flamechart.error_count).label("count")
     mean_col = func.avg(Flamechart.error_count).label("mean")
     median_col = (
         func.percentile_cont(0.5).within_group(Flamechart.error_count).label("median")
     )
-    std_col = func.stddev_pop(Flamechart.error_count).label("stddev")
     min_col = func.min(Flamechart.error_count).label("min")
     max_col = func.max(Flamechart.error_count).label("max")
 
@@ -316,10 +317,8 @@ def get_basic_stats_chart(
             session.query(
                 grouped_prefix,
                 Flamechart.to_date,
-                sum_column,
                 mean_col,
                 median_col,
-                std_col,
                 min_col,
                 max_col,
             )
@@ -329,25 +328,21 @@ def get_basic_stats_chart(
     else:
         q = session.query(
             Flamechart.to_date,
-            sum_column,
             mean_col,
             median_col,
-            std_col,
             min_col,
             max_col,
         ).group_by(Flamechart.to_date)
 
     return [
         {
-            "prefix": getattr(row, "grouped_prefix", None),
-            "count": row.to_date,
-            "mean": row.count,
-            "median": row.mean,
-            "stddev": row.median,
-            "min": row.stddev,
-            "max": row.min,
+            "to_date": row.to_date,
+            "mean": row.mean,
+            "median": row.median,
+            "min": row.min,
+            "max": row.max,
         }
-        for row in q.all()
+        for row in q.order_by(Flamechart.to_date.asc()).all()
     ]
 
 
