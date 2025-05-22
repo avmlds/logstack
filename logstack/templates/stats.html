@@ -46,11 +46,28 @@ async function loadStats() {
     ],
     series: [
       { name: 'Count', type: 'line', data: dataCount, yAxisIndex: 1 },
-      { name: 'Mean', type: 'bar', data: dataMean },
-      { name: 'Median', type: 'bar', data: dataMedian },
-      { name: 'Stddev', type: 'bar', data: dataStddev },
-      { name: 'Min', type: 'bar', data: dataMin },
-      { name: 'Max', type: 'bar', data: dataMax },
+      { name: 'Mean', type: 'line', data: dataMean },
+      { name: 'Median', type: 'line', data: dataMedian },
+      { name: 'Stddev', type: 'line', data: dataStddev },
+       {
+          name: 'Min',
+          type: 'line',
+          data: dataMin,
+          lineStyle: { opacity: 0 },
+          stack: 'range',
+          areaStyle: {
+            opacity: 0
+          }
+        },
+        {
+          name: 'Max',
+          type: 'line',
+          data: dataMax,
+          stack: 'range',
+          areaStyle: {
+            color: 'rgba(0, 136, 212, 0.3)'
+          }
+        }
     ]
   });
 }

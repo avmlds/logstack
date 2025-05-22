@@ -13,6 +13,8 @@ class Flamechart(Base):
     prefix = Column(String, index=True, nullable=False)
     error_count = Column(Integer, nullable=False)
 
+    environment = Column(String, nullable=True)
+
     from_date = Column(DateTime, index=True, nullable=False)
     to_date = Column(DateTime, index=True, nullable=False)
     created_at = Column(DateTime, index=True, nullable=False)

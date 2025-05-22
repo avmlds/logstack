@@ -2,7 +2,7 @@
     <input
       id="prefix"
       placeholder="Prefix"
-      value="{{ prefix or '/' }}"
+      value="{{ prefix or '' }}"
       style="width: 100%;"
       onfocus="fetchSuggestions()"
       oninput="debouncedFetchSuggestions()"

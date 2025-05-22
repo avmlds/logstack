@@ -3,7 +3,9 @@ from http import HTTPStatus
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from logstack.api_models import (
+from logstack.api.models import (
+    AllUploadsRequest,
+    BasePrefixRequest,
     BasicStatsModel,
     CompareRequest,
     CompareResponse,
@@ -12,21 +14,21 @@ from logstack.api_models import (
     GenericResponse,
     PrefixRequest,
     StatsRequest,
+    TrendsChartResponse,
     TrendsRequest,
     TrendsResponse,
     UploadsModel,
-    AllUploadsRequest,
-    TrendsChartResponse,
 )
 from logstack.controllers import (
     compare_uploads,
+    compute_trend_chart,
     compute_trends,
+    get_all_uploads,
     get_basic_stats,
+    get_basic_stats_chart,
+    get_prefix_autocomplete,
     get_upload_diffs,
     list_upload_times,
-    get_all_uploads,
-    compute_trend_chart,
-    get_prefix_autocomplete,
 )
 from logstack.database import get_db
 
@@ -37,8 +39,12 @@ comparison_router = APIRouter(prefix="/data")
 def uploads_all(req: AllUploadsRequest, db: Session = Depends(get_db)):
     return {
         "result": get_all_uploads(
-            db, req.page, req.page_size, req.order_by, req.descending
-        )
+            db,
+            req.page,
+            req.page_size,
+            req.order_by,
+            req.descending,
+        ),
     }
 
 
@@ -76,7 +82,8 @@ def api_trends(req: TrendsRequest = Body(...), db: Session = Depends(get_db)):
 
 
 @comparison_router.post(
-    "/trends-chart", response_model=GenericResponse[TrendsChartResponse]
+    "/trends-chart",
+    response_model=GenericResponse[TrendsChartResponse],
 )
 def api_trend_chart(req: TrendsRequest = Body(...), db: Session = Depends(get_db)):
     return {
@@ -98,6 +105,13 @@ def api_stats(req: StatsRequest = Body(...), db: Session = Depends(get_db)):
             req.page,
             req.page_size,
         ),
+    }
+
+
+@comparison_router.post("/stats-chart", response_model=GenericResponse[BasicStatsModel])
+def api_stats_chart(req: BasePrefixRequest = Body(...), db: Session = Depends(get_db)):
+    return {
+        "result": get_basic_stats_chart(db, req.prefix),
     }
 
 
@@ -127,5 +141,4 @@ def get_prefix_suggestions(
     db: Session = Depends(get_db),
 ):
     """Return next-level prefix segments under the given prefix."""
-
     return {"result": get_prefix_autocomplete(db, prefix)}

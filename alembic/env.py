@@ -5,7 +5,6 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-
 from logstack.database import get_url
 from logstack.database_models import Base
 

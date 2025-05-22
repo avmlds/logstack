@@ -15,7 +15,9 @@ def _apply_prefix_filter(query, prefix):
     return query
 
 
-def list_upload_times(session, prefix: str = None, page: int = 1, page_size: int = 50):
+def list_upload_times(
+    session, prefix: str | None = None, page: int = 1, page_size: int = 50
+):
     """List distinct upload timestamps (created_at), optionally filtered by prefix prefix,
     with pagination.
     """
@@ -44,7 +46,10 @@ def get_all_uploads(
     page: int = 1,
     page_size: int = 50,
     order_by: Literal[
-        "upload_uuid", "filename", "created_at", "errors_total"
+        "upload_uuid",
+        "filename",
+        "created_at",
+        "errors_total",
     ] = "created_at",
     descending: bool = True,
 ):
@@ -84,8 +89,8 @@ def get_all_uploads(
 
 def get_upload_diffs(
     session,
-    prefix: str = None,
-    include_upload_uuids: list[str] = None,
+    prefix: str | None = None,
+    include_upload_uuids: list[str] | None = None,
     page: int = 1,
     page_size: int = 50,
     order_by: Literal["improvements", "degradations"] = "improvements",
@@ -136,7 +141,9 @@ def get_upload_diffs(
 
 
 def calculate_trends(
-    rows: list[Flamechart], group_by: str, sorting_key: str
+    rows: list[Flamechart],
+    group_by: str,
+    sorting_key: str,
 ) -> list[tuple[str, float]]:
     trends = []
     for group_by_key, group in groupby(rows, key=lambda r: getattr(r, group_by)):
@@ -156,7 +163,7 @@ def calculate_trends(
 def compute_trend_chart(session, prefix: str = "/"):
     prefix_len = len(prefix)
     grouped_prefix = func.substr(Flamechart.prefix, 1, prefix_len).label(
-        "grouped_prefix"
+        "grouped_prefix",
     )
     q = (
         session.query(
@@ -171,7 +178,7 @@ def compute_trend_chart(session, prefix: str = "/"):
     )
     rows = q.all()
     trends = dict(
-        calculate_trends(rows, group_by="grouped_prefix", sorting_key="to_date")
+        calculate_trends(rows, group_by="grouped_prefix", sorting_key="to_date"),
     )
     slope, intercept = trends.get(prefix, (1, 0))
     return [
@@ -187,7 +194,7 @@ def compute_trend_chart(session, prefix: str = "/"):
 
 def compute_trends(
     session,
-    prefix: str = None,
+    prefix: str | None = None,
     page: int = 1,
     page_size: int = 100,
     descending: bool = True,
@@ -224,8 +231,8 @@ def compute_trends(
 
 def get_basic_stats(
     session,
-    prefix: str = None,
-    order_by: str = "mean",
+    prefix: str | None = None,
+    order_by: str = "count",
     descending: bool = True,
     page: int = 1,
     page_size: int = 50,
@@ -253,8 +260,7 @@ def get_basic_stats(
 
     # 3) Optional prefix filter
     if prefix:
-        p = prefix.rstrip("/")
-        q = q.filter(Flamechart.prefix.like(f"{p}%"))
+        q = q.filter(Flamechart.prefix.like(f"{prefix}%"))
 
     # 4) Map the user’s order_by key to the actual column
     ordering_map = {
@@ -287,11 +293,69 @@ def get_basic_stats(
     ]
 
 
+def get_basic_stats_chart(
+    session,
+    prefix: str | None = None,
+):
+    # 1) Define each aggregate and label it
+    sum_column = func.sum(Flamechart.error_count).label("count")
+    mean_col = func.avg(Flamechart.error_count).label("mean")
+    median_col = (
+        func.percentile_cont(0.5).within_group(Flamechart.error_count).label("median")
+    )
+    std_col = func.stddev_pop(Flamechart.error_count).label("stddev")
+    min_col = func.min(Flamechart.error_count).label("min")
+    max_col = func.max(Flamechart.error_count).label("max")
+
+    if prefix:
+        prefix_len = len(prefix)
+        grouped_prefix = func.substr(Flamechart.prefix, 1, prefix_len).label(
+            "grouped_prefix",
+        )
+        q = (
+            session.query(
+                grouped_prefix,
+                Flamechart.to_date,
+                sum_column,
+                mean_col,
+                median_col,
+                std_col,
+                min_col,
+                max_col,
+            )
+            .filter(Flamechart.prefix.startswith(prefix))
+            .group_by(grouped_prefix, Flamechart.to_date)
+        )
+    else:
+        q = session.query(
+            Flamechart.to_date,
+            sum_column,
+            mean_col,
+            median_col,
+            std_col,
+            min_col,
+            max_col,
+        ).group_by(Flamechart.to_date)
+
+    return [
+        {
+            "prefix": getattr(row, "grouped_prefix", None),
+            "count": row.to_date,
+            "mean": row.count,
+            "median": row.mean,
+            "stddev": row.median,
+            "min": row.stddev,
+            "max": row.min,
+        }
+        for row in q.all()
+    ]
+
+
 def compare_uploads(
     session,
     upload_1_uuid: str,
     upload_2_uuid: str,
-    prefix: str = None,
+    prefix: str | None = None,
     page: int = 1,
     page_size: int = 50,
 ):
@@ -335,7 +399,7 @@ def compare_uploads(
 def get_prefix_autocomplete(session, prefix: str) -> list[str]:
     like_pattern = f"{prefix.rstrip('/')}%"
     query = session.query(Flamechart.prefix).filter(
-        Flamechart.prefix.like(like_pattern)
+        Flamechart.prefix.like(like_pattern),
     )
 
     next_segments = set()

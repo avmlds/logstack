@@ -19,8 +19,11 @@ class AllUploadsRequest(BaseModel):
     descending: bool = True
 
 
-class PrefixRequest(BaseModel):
+class BasePrefixRequest(BaseModel):
     prefix: str | None = Field(None, description="prefix prefix filter")
+
+
+class PrefixRequest(BasePrefixRequest):
     page: int = Field(1, ge=1)
     page_size: int = Field(1000, ge=1, le=1000)
 
@@ -96,3 +99,17 @@ class BasicStatsModel(BaseModel):
     stddev: float
     min: float
     max: float
+
+
+class EventRequestModel(BaseModel):
+    prefix: str
+    error_count: int = 1
+    filename: str | None = None
+    from_date: datetime | None = None
+    to_date: datetime | None = None
+    upload_uuid: str | None = None
+    environment: str | None = None
+
+
+class EventResponseModel(BaseModel):
+    id: str

@@ -2,16 +2,16 @@ from http import HTTPStatus
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from logstack.comparison_api import comparison_router
-from logstack.file_management_api import file_router
-from fastapi.staticfiles import StaticFiles
+from logstack.api.analytics import comparison_router
+from logstack.api.ingestion import ingestion_router
 
 templates = Jinja2Templates("templates")
 
 app = FastAPI()
-app.include_router(file_router, prefix="/api")
+app.include_router(ingestion_router, prefix="/api")
 app.include_router(comparison_router, prefix="/api")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -23,8 +23,6 @@ async def home(request: Request):
 
 @app.get("/{template}")
 async def template_index(template: str, request: Request):
-    if not template:
-        template = "index"
     if "favicon" in template:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
 

@@ -29,11 +29,12 @@ async function loadTrends() {
   }
   trendsChartInstance.setOption({
     tooltip: { trigger: 'axis' },
+    legend: { data: ['Error Count', 'Trend'], textStyle: { color: '#ccc' } },
     xAxis: { type: 'category', data: x_labels, axisLabel: { color: '#aaa', rotate: 60 }},
     yAxis: { type: 'value', axisLabel: { color: '#aaa' }},
     series: [
-      { name: 'Data', type: 'line', data: error_counts, smooth: false, lineStyle: { width: 3 } },
-      { name: 'Predict', type: 'line', data: slopes, smooth: true, lineStyle: { width: 3 } }
+      { name: 'Error Count', type: 'line', data: error_counts, smooth: false, lineStyle: { width: 3 } },
+      { name: 'Trend', type: 'line', data: slopes, smooth: true, lineStyle: { width: 3 } }
     ]
   });
 }
