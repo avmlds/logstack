@@ -13,8 +13,6 @@ let statsChartInstance;
 async function loadStats() {
   const payload = {
     prefix: document.getElementById('prefix').value,
-    order_by: document.getElementById('order_by').value,
-    descending: document.getElementById('descending').checked
   };
   const res = await fetch('/api/data/stats-chart', {
     method: 'POST',
