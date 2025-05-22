@@ -3,12 +3,6 @@
 {% block body %}
 <div class="panel">
   {% include "prefix-search.html" with context %}
-  <select id="order_by">
-    {% for col in ["count","mean","median","stddev","min","max"] %}
-      <option value="{{ col }}" {% if order_by==col %}selected{% endif %}>{{ col }}</option>
-    {% endfor %}
-  </select>
-  <label><input type="checkbox" id="descending" {% if descending %}checked{% endif %}> Desc</label>
   <button onclick="loadStats()">Refresh</button>
 </div>
 
