@@ -19,6 +19,7 @@ from logstack.api.models import (
     TrendsRequest,
     TrendsResponse,
     UploadsModel,
+    TrendsTableRequest,
 )
 from logstack.controllers import (
     compare_uploads,
@@ -70,13 +71,12 @@ def api_get_diffs(req: DiffsRequest = Body(...), db: Session = Depends(get_db)):
 
 
 @comparison_router.post("/trends", response_model=GenericResponse[TrendsResponse])
-def api_trends(req: TrendsRequest = Body(...), db: Session = Depends(get_db)):
+def api_trends(req: TrendsTableRequest = Body(...), db: Session = Depends(get_db)):
     return {
         "result": compute_trends(
             db,
             req.prefix,
-            req.page,
-            req.page_size,
+            req.order_by,
             req.descending,
         ),
     }

@@ -198,8 +198,7 @@ def compute_trend_chart(session, prefix: str = "/"):
 def compute_trends(
     session,
     prefix: str | None = None,
-    page: int = 1,
-    page_size: int = 100,
+    order_by: Literal["prefix", "slope", "intercept"] = "prefix",
     descending: bool = True,
 ):
     """Compute linear regression slope of error_count vs. time (days) for each prefix.
@@ -217,19 +216,15 @@ def compute_trends(
     rows = q.all()
 
     trends = calculate_trends(rows, "prefix", "created_at")
-    trends.sort(key=lambda x: x[0], reverse=descending)
-
-    # apply pagination
-    start = (page - 1) * page_size
-    end = start + page_size
-    return [
+    dict_trends = [
         {
             "prefix": trend[0],
             "slope": trend[1][0],
             "intercept": trend[1][1],
         }
-        for trend in trends[start:end]
+        for trend in trends
     ]
+    return sorted(dict_trends, key=lambda x: x[order_by], reverse=descending)
 
 
 def get_basic_stats(

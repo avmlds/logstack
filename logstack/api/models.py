@@ -47,6 +47,11 @@ class TrendsRequest(PrefixRequest):
     descending: bool = True
 
 
+class TrendsTableRequest(BasePrefixRequest):
+    order_by: Literal["prefix", "slope", "intercept"] = "prefix"
+    descending: bool = True
+
+
 class TrendsResponse(BaseModel):
     prefix: str
     slope: float
